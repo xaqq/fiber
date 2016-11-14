@@ -162,15 +162,16 @@ context::resume_( detail::data_t & d) noexcept {
 #else
 void
 context::resume_( detail::data_t & d) noexcept {
-    auto result = ctx_( & d);
-    detail::data_t * dp( std::get< 1 >( result) );
+    detail::data_t * dp( ctx_( & d) );
     if ( nullptr != dp) {
-        dp->from->ctx_ = std::move( std::get< 0 >( result) );
+        dp->from->ctx_ = std::move( ctx_);
         if ( nullptr != dp->lk) {
             dp->lk->unlock();
         } else if ( nullptr != dp->ctx) {
             context_initializer::active_->set_ready_( dp->ctx);
         }
+    } else {
+        std::move( ctx_);
     }
 }
 #endif
@@ -329,7 +330,8 @@ context::suspend_with_cc() noexcept {
     std::swap( context_initializer::active_, prev);
     detail::data_t d{ prev };
     // context switch
-    return std::move( std::get< 0 >( ctx_( & d) ) );
+    ctx_( & d);
+    return std::move( ctx_);
 }
 #endif
 
